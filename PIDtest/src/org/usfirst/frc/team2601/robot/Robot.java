@@ -33,7 +33,7 @@ public class Robot extends IterativeRobot {
 	
 	public double x_val;
 	public double y_val;
-	public double Kp = 1.0;
+	public double Kp = 0.50;
 	public double Ki = 0.0;
 	public double Kd = 0.0;
 	
