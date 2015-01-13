@@ -1,6 +1,11 @@
 
 package org.usfirst.frc.team2601.robot;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.Encoder;
@@ -28,14 +33,14 @@ public class Robot extends IterativeRobot {
 	RobotDrive drive;
 	Joystick stick;
 	JoystickButton enterPID;
-	Encoder enc = new Encoder(0,1,false, Encoder.EncodingType.k4X);
+	Encoder enc = new Encoder(0,1,true, Encoder.EncodingType.k4X);
 	PIDController control;
 	
 	public double x_val;
 	public double y_val;
-	public double Kp = 0.50;
-	public double Ki = 0.0;
-	public double Kd = 0.0;
+	public double Kp = 0.65;
+	public double Ki = 0.15;
+	public double Kd = 0.10;
 	
     public void robotInit() {
     	leftMotor = new CANTalon(1);
@@ -43,12 +48,47 @@ public class Robot extends IterativeRobot {
     	drive = new RobotDrive(leftMotor, rightMotor);
     	stick = new Joystick(0);
     	enterPID = new JoystickButton(stick, 1);
-    	enc.setDistancePerPulse(1);
+    	enc.reset();
+    	enc.setDistancePerPulse(.17);
     	enc.setPIDSourceParameter(PIDSource.PIDSourceParameter.kDistance);
-    	control = new PIDController(Kp, Ki, Kd, 0.1, enc, leftMotor);
-    	control.setSetpoint(0.5);
+    	
+    	String csvFile = "/pidVals/pid.csv";
+    	BufferedReader br = null;
+    	String line = "";
+    	String cvsSplitBy = ";";
+     
+    	try {
+     
+    		br = new BufferedReader(new FileReader(csvFile));
+    		while ((line = br.readLine()) != null) {
+    			String[] csvVals = line.split(cvsSplitBy);
+    			
+    			Kp = Double.parseDouble(csvVals[0]);
+    			Ki = Double.parseDouble(csvVals[1]);
+    			Kd = Double.parseDouble(csvVals[2]);
+    		}
+     
+    	} catch (FileNotFoundException e) {
+    		e.printStackTrace();
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    	} finally {
+    		if (br != null) {
+    			try {
+    				br.close();
+    			} catch (IOException e) {
+    				e.printStackTrace();
+    			}
+    		}
+    	}
+    	
+    	control = new PIDController(Kp, Ki, Kd,  enc, leftMotor);
+    	control.setSetpoint(400.0);
     	control.setOutputRange(0.0001, 0.9999);
     	control.startLiveWindowMode();
+    	
+    	
+    	
     }
 
     /**
@@ -62,13 +102,12 @@ public class Robot extends IterativeRobot {
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {
-        /* x_val = stick.getX();
-         y_val = stick.getY();
+        x_val = stick.getX();
+        y_val = stick.getY();
         
-        drive.arcadeDrive(y_val, x_val);
-        co*/
-        
-        control.startLiveWindowMode();
+        drive.arcadeDrive(stick);
+        System.out.println(Kd);
+        //control.startLiveWindowMode();
         
     }
     
@@ -83,9 +122,12 @@ public class Robot extends IterativeRobot {
     	//enc.startLiveWindowMode();
     	SmartDashboard.putNumber("left moto", leftMotor.get());
     	SmartDashboard.putNumber("encode", enc.getDistance());
+    	System.out.println("lm");
     	System.out.println(leftMotor.get());
     	//rightMotor.set(leftMotor.get()*-1);
-    	System.out.println(rightMotor.get());
+    	//System.out.println(rightMotor.get());
+    	System.out.println("enc");
+    	System.out.println(enc.getDistance());
     }
     
 }
