@@ -41,6 +41,7 @@ public class Robot extends IterativeRobot {
 	public double Kp = 0.65;
 	public double Ki = 0.15;
 	public double Kd = 0.10;
+	public double setpoint = 0.0;
 	
     public void robotInit() {
     	leftMotor = new CANTalon(1);
@@ -66,6 +67,7 @@ public class Robot extends IterativeRobot {
     			Kp = Double.parseDouble(csvVals[0]);
     			Ki = Double.parseDouble(csvVals[1]);
     			Kd = Double.parseDouble(csvVals[2]);
+    			setpoint = Double.parseDouble(csvVals[3]);
     		}
      
     	} catch (FileNotFoundException e) {
@@ -83,7 +85,7 @@ public class Robot extends IterativeRobot {
     	}
     	
     	control = new PIDController(Kp, Ki, Kd,  enc, leftMotor);
-    	control.setSetpoint(400.0);
+    	control.setSetpoint(setpoint);
     	control.setOutputRange(0.0001, 0.9999);
     	control.startLiveWindowMode();
     	
@@ -102,11 +104,12 @@ public class Robot extends IterativeRobot {
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {
-        x_val = stick.getX();
-        y_val = stick.getY();
+       // x_val = stick.getX();
+       // y_val = stick.getY();
         
         drive.arcadeDrive(stick);
         System.out.println(Kd);
+        System.out.println(setpoint);
         //control.startLiveWindowMode();
         
     }
@@ -124,7 +127,7 @@ public class Robot extends IterativeRobot {
     	SmartDashboard.putNumber("encode", enc.getDistance());
     	System.out.println("lm");
     	System.out.println(leftMotor.get());
-    	//rightMotor.set(leftMotor.get()*-1);
+    	rightMotor.set(leftMotor.get()*-1);
     	//System.out.println(rightMotor.get());
     	System.out.println("enc");
     	System.out.println(enc.getDistance());
