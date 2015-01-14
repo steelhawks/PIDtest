@@ -16,6 +16,8 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -35,13 +37,14 @@ public class Robot extends IterativeRobot {
 	JoystickButton enterPID;
 	Encoder enc = new Encoder(0,1,true, Encoder.EncodingType.k4X);
 	PIDController control;
+	NetworkTable table;
 	
 	public double x_val;
 	public double y_val;
-	public double Kp = 0.65;
-	public double Ki = 0.15;
-	public double Kd = 0.10;
-	public double setpoint = 0.0;
+	public double Kp = 1.0;
+	public double Ki = 0.0;
+	public double Kd = 0.0;
+	public double setpoint = 200.0;
 	
     public void robotInit() {
     	leftMotor = new CANTalon(1);
@@ -50,9 +53,12 @@ public class Robot extends IterativeRobot {
     	stick = new Joystick(0);
     	enterPID = new JoystickButton(stick, 1);
     	enc.reset();
-    	enc.setDistancePerPulse(.17);
+    	enc.setDistancePerPulse(1);
     	enc.setPIDSourceParameter(PIDSource.PIDSourceParameter.kDistance);
     	
+    	table = NetworkTable.getTable("dataTable");
+    	//table.
+    	/*
     	String csvFile = "/pidVals/pid.csv";
     	BufferedReader br = null;
     	String line = "";
@@ -83,13 +89,19 @@ public class Robot extends IterativeRobot {
     			}
     		}
     	}
+    	*/
     	
-    	control = new PIDController(Kp, Ki, Kd,  enc, leftMotor);
+    	control = new PIDController(Kp, Ki, Kd,  enc, leftMotor, 0.002);
     	control.setSetpoint(setpoint);
-    	control.setOutputRange(0.0001, 0.9999);
-    	control.startLiveWindowMode();
+    	control.setContinuous(true);
+    	control.setOutputRange(-0.25, 0.25);
     	
+    	//control.startLiveWindowMode();
     	
+    	table.putNumber("P", Kp);
+    	table.putNumber("I", Ki);
+    	table.putNumber("D", Kd);
+    	table.putNumber("setpoint", setpoint);
     	
     }
 
@@ -107,10 +119,34 @@ public class Robot extends IterativeRobot {
        // x_val = stick.getX();
        // y_val = stick.getY();
         
-        drive.arcadeDrive(stick);
-        System.out.println(Kd);
-        System.out.println(setpoint);
+        //drive.arcadeDrive(stick);
+        //System.out.println(Kd);
+        //System.out.println(setpoint);
         //control.startLiveWindowMode();
+        if (enterPID.get()){
+        	System.out.println("pressed");
+        	Timer.delay(0.5);
+        	Kp = table.getNumber("P");
+        	Ki = table.getNumber("I");
+        	Kd = table.getNumber("D");
+        	setpoint = table.getNumber("setpoint");
+        	
+        	control.setPID(Kp, Ki, Kd);
+        	control.setSetpoint(setpoint);
+        	control.setPercentTolerance(50.0);
+        	
+        	System.out.println(Kp);
+        	System.out.println(Ki);
+        	System.out.println(Kd);
+        	System.out.println(setpoint);
+        	
+        	control.enable();
+        	SmartDashboard.putNumber("PIDloop", control.get());
+        	//control.disable();
+        	System.out.println("I should be running");
+        	//control.disable();
+        }
+        SmartDashboard.putNumber("Enc", enc.getDistance());
         
     }
     
