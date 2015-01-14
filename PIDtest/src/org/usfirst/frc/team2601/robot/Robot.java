@@ -102,6 +102,7 @@ public class Robot extends IterativeRobot {
     	table.putNumber("I", Ki);
     	table.putNumber("D", Kd);
     	table.putNumber("setpoint", setpoint);
+    	control.setPercentTolerance(50.0);
     	
     }
 
@@ -133,7 +134,7 @@ public class Robot extends IterativeRobot {
         	
         	control.setPID(Kp, Ki, Kd);
         	control.setSetpoint(setpoint);
-        	control.setPercentTolerance(50.0);
+        	
         	
         	System.out.println(Kp);
         	System.out.println(Ki);
@@ -141,12 +142,22 @@ public class Robot extends IterativeRobot {
         	System.out.println(setpoint);
         	
         	control.enable();
-        	SmartDashboard.putNumber("PIDloop", control.get());
+        	//SmartDashboard.putNumber("PIDloop", control.get());
         	//control.disable();
         	System.out.println("I should be running");
         	//control.disable();
         }
         SmartDashboard.putNumber("Enc", enc.getDistance());
+        SmartDashboard.putNumber("error",control.getError());
+        SmartDashboard.putNumber("PID", control.get());
+        
+        if (Math.abs(control.getError()) < 15.0){
+        	control.disable();
+        }
+        
+        if (Math.abs(control.getError()) > 15.0){
+        	control.enable();
+        }
         
     }
     
