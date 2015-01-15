@@ -35,25 +35,26 @@ public class Robot extends IterativeRobot {
 	RobotDrive drive;
 	Joystick stick;
 	JoystickButton enterPID;
+	JoystickButton disableControl;
 	Encoder enc = new Encoder(0,1,true, Encoder.EncodingType.k4X);
 	PIDController control;
 	NetworkTable table;
 	
 	public double x_val;
 	public double y_val;
-	public double Kp = 1.0;
+	public double Kp = 0.08;
 	public double Ki = 0.0;
 	public double Kd = 0.0;
-	public double setpoint = 200.0;
-	
+	public double setpoint = 100.0;
     public void robotInit() {
     	leftMotor = new CANTalon(1);
     	rightMotor = new CANTalon(2);
     	drive = new RobotDrive(leftMotor, rightMotor);
     	stick = new Joystick(0);
     	enterPID = new JoystickButton(stick, 1);
+    	disableControl = new JoystickButton(stick, 2);
     	enc.reset();
-    	enc.setDistancePerPulse(1);
+    	enc.setDistancePerPulse(0.17);
     	enc.setPIDSourceParameter(PIDSource.PIDSourceParameter.kDistance);
     	
     	table = NetworkTable.getTable("dataTable");
@@ -102,7 +103,7 @@ public class Robot extends IterativeRobot {
     	table.putNumber("I", Ki);
     	table.putNumber("D", Kd);
     	table.putNumber("setpoint", setpoint);
-    	control.setPercentTolerance(50.0);
+    	control.setAbsoluteTolerance(15.0);
     	
     }
 
@@ -150,13 +151,10 @@ public class Robot extends IterativeRobot {
         SmartDashboard.putNumber("Enc", enc.getDistance());
         SmartDashboard.putNumber("error",control.getError());
         SmartDashboard.putNumber("PID", control.get());
-        
-        if (Math.abs(control.getError()) < 15.0){
+        SmartDashboard.putBoolean("onTarget", control.onTarget());
+
+        if (disableControl.get() || control.onTarget()){
         	control.disable();
-        }
-        
-        if (Math.abs(control.getError()) > 15.0){
-        	control.enable();
         }
         
     }
